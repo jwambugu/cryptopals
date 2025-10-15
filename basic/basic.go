@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"unicode/utf8"
 )
 
 var ErrLengthNotEqual = fmt.Errorf("length not equal")
@@ -45,4 +46,71 @@ func FixedXOR(inputOne, inputTwo string) (string, error) {
 	}
 
 	return hex.EncodeToString(out), nil
+}
+
+// buildCorpus constructs a normalized frequency distribution (corpus)
+// from the provided reference text.
+//
+// It counts how often each rune appears and then divides by the total number
+// of runes to get the relative frequency of each character.
+func buildCorpus(text string) map[rune]float64 {
+	c := make(map[rune]float64)
+
+	for _, char := range text {
+		c[char]++
+	}
+
+	total := utf8.RuneCountInString(text)
+
+	for char := range c {
+		c[char] = c[char] / float64(total)
+	}
+
+	return c
+}
+
+// scoreEnglish evaluates how closely a piece of text matches the given frequency corpus.
+//
+// It computes a heuristic "English-likeness" score by summing the frequency
+// weights of each rune (from the provided corpus) found in the text, then normalizing
+// by the text length. The higher the returned value, the more the text resembles English.
+func scoreEnglish(text string, corpus map[rune]float64) float64 {
+	var score float64
+
+	for _, char := range text {
+		score += corpus[char]
+	}
+
+	return score / float64(utf8.RuneCountInString(text))
+}
+
+// singleXOR applies a single-byte XOR cipher to the input bytes using the given key.
+//
+// Each byte of the input slice is XORed with the key to produce a new slice.
+func singleXOR(in []byte, key byte) []byte {
+	res := make([]byte, len(in))
+	for i, c := range in {
+		res[i] = c ^ key
+	}
+
+	return res
+}
+
+// FindSingleByteXORCipher attempts to break a single-byte XOR cipher by brute-forcing all 256 keys.
+//
+// For each possible key, it decrypts the input using singleXOR(), then scores the result
+// using scoreEnglish() against the given corpus. The best-scoring plaintext and its key
+// are returned.
+func FindSingleByteXORCipher(in []byte, c map[rune]float64) (res []byte, key byte, score float64) {
+	for k := 0; k < 256; k++ {
+		out := singleXOR(in, byte(k))
+		s := scoreEnglish(string(out), c)
+		if s > score {
+			res = out
+			score = s
+			key = byte(k)
+		}
+	}
+
+	return
 }
