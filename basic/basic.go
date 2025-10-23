@@ -114,3 +114,14 @@ func FindSingleByteXORCipher(in []byte, c map[rune]float64) (res []byte, key byt
 
 	return
 }
+
+// RepeatingXOR applies a repeating-key XOR cipher to the input bytes.
+func RepeatingXOR(in, key []byte) []byte {
+	res := make([]byte, len(in))
+
+	for i := range in {
+		res[i] = in[i] ^ key[i%len(key)]
+	}
+
+	return res
+}
