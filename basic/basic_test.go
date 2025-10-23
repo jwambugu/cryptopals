@@ -1,7 +1,9 @@
 package basic
 
 import (
+	"bytes"
 	"cryptopals/assert"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
@@ -73,4 +75,27 @@ func TestProblem4(t *testing.T) {
 	}
 
 	t.Logf("%s", res)
+}
+
+func decodeHex(t *testing.T, s string) []byte {
+	t.Helper()
+
+	v, err := hex.DecodeString(s)
+	if err != nil {
+		t.Fatal("failed to decode hex:", s)
+	}
+
+	return v
+}
+
+func TestRepeatingXOR(t *testing.T) {
+	input := `Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal`
+
+	want := `0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f`
+
+	res := RepeatingXOR([]byte(input), []byte("ICE"))
+	if !bytes.Equal(res, decodeHex(t, want)) {
+		t.Fatal("wrong result:", res)
+	}
 }
