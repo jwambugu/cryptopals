@@ -4,6 +4,7 @@ import (
 	"cryptopals/assert"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -44,4 +45,32 @@ var corpus = corpusFromFile("../testdata/alice-in-wonderland.txt")
 func TestFindSingleByteXORCipher(t *testing.T) {
 	res, key, score := FindSingleByteXORCipher([]byte("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"), corpus)
 	t.Logf("%s %s %v", res, string(key), score)
+}
+
+func readFile(t *testing.T, name string) []byte {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		t.Fatalf("failed to read file: %s", err)
+	}
+
+	return data
+}
+
+func TestProblem4(t *testing.T) {
+	data := readFile(t, "../testdata/4.txt")
+
+	var (
+		bestScore float64
+		res       []byte
+	)
+
+	for _, line := range strings.Split(string(data), "\n") {
+		out, _, score := FindSingleByteXORCipher([]byte(line), corpus)
+		if score > bestScore {
+			res = out
+			bestScore = score
+		}
+	}
+
+	t.Logf("%s", res)
 }
